@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "django-pandas-forms"
+version = "0.1.0"
+description = "Validate tabular data with pandas and Django model fields."
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{name = "memegauste", email = "memegauste@gmail.com"}]
+dependencies = [
+    "Django>=6.1.2,<6.2",
+    "pandas>=3.0.6,<4",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=9.1.1,<10",
+    "pytest-django>=4.14,<5",
+    "pytest-cov>=7,<8",
+]
+
+[project.urls]
+Homepage = "https://github.com/memegauste/django-pandas-forms"
+Issues = "https://github.com/memegauste/django-pandas-forms/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+testpaths = ["tests"]
+addopts = "-ra --strict-config --strict-markers"
+
+[tool.coverage.run]
+source = ["django_pandas_forms"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 90
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

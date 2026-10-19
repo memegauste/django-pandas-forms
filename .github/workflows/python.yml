@@ -1,0 +1,84 @@
+name: Python
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14", "3.15"]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            requirements*.txt
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+          python -m pip check
+      - name: Run tests with coverage
+        run: python -m pytest --cov=django_pandas_forms --cov-report=term-missing --cov-report=xml
+
+  package:
+    name: Lint and build distributions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            requirements*.txt
+      - name: Install development dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+      - name: Check style
+        run: |
+          python -m ruff check .
+          python -m ruff format --check .
+      - name: Build wheel and source distribution
+        run: |
+          python -m build
+          python -m twine check --strict dist/*
+      - name: Test both distributions in clean environments
+        shell: bash
+        run: |
+          for package in dist/*; do
+            environment="$RUNNER_TEMP/$(basename "$package").venv"
+            python -m venv "$environment"
+            "$environment/bin/python" -m pip install "$package"
+            "$environment/bin/python" -m pip check
+            "$environment/bin/python" -I tests/smoke_install.py
+          done
+      - uses: actions/upload-artifact@v7
+        with:
+          name: distributions
+          path: dist/*
+          if-no-files-found: error
